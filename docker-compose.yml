@@ -1,0 +1,39 @@
+version: '2.1'
+services:
+    postgres:
+        image: postgres:9.6
+        volumes:
+            - /data/airflow_data:/var/lib/postgresql/data
+        environment:
+            - POSTGRES_USER=airflow
+            - POSTGRES_PASSWORD=airflow
+            - POSTGRES_DB=airflow
+
+    webserver:
+        image: ctg-airflow:latest
+        restart: always
+        depends_on:
+            - postgres
+        environment:
+            - LOAD_EX=n
+            - EXECUTOR=Local
+        volumes:
+            - /data/version_control:/usr/local/airflow/dags
+            - /data/ds_app_data:/data/ds_app_data
+            - /mounted_drives:/mounted_drives
+            - ./requirements.txt:/requirements.txt
+            #- "/etc/timezone:/etc/timezone:ro"
+            #- "/etc/localtime:/etc/localtime:ro"
+            # Uncomment to include custom plugins
+            # - ./plugins:/usr/local/airflow/plugins
+        tmpfs:
+            - /mnt/ramdisk:exec,mode=777,size=2g,uid=1000,gid=1000
+        ports:
+            - "8080:8080"
+        command: webserver
+        privileged: true
+        healthcheck:
+            test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
+            interval: 30s
+            timeout: 30s
+            retries: 3
