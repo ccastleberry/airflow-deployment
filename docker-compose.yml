@@ -1,5 +1,8 @@
 version: '3.7'
 services:
+    redis:
+        image: 'redis:5.0.5'
+
     postgres:
         image: postgres:9.6
         volumes:
@@ -13,10 +16,12 @@ services:
         restart: always
         depends_on:
             - postgres
+            - redis
         env_file:
-            - ./airflow-webserver/.airflow.env
+            - ./airflow-webserver/airflow.env
         volumes:
             - ${AIRFLOW_DAG_MOUNT}:/usr/local/airflow/dags
+            - ${GOOGLE_MOUNT}:/google_cloud
         ports:
             - "8080:8080"
         command: webserver
@@ -26,3 +31,41 @@ services:
             interval: 30s
             timeout: 30s
             retries: 3
+    
+    flower:
+        image: ccastleberry/airflow:${TAG}
+        build: ./airflow-webserver
+        restart: always
+        depends_on:
+            - redis
+        env_file:
+            - ./airflow-webserver/airflow.env
+        ports:
+            - "5555:5555"
+        command: flower
+
+    scheduler:
+        image: ccastleberry/airflow:${TAG}
+        build: ./airflow-webserver
+        restart: always
+        depends_on:
+            - webserver
+        volumes:
+            - ${AIRFLOW_DAG_MOUNT}:/usr/local/airflow/dags
+            - ${GOOGLE_MOUNT}:/google_cloud
+        env_file:
+            - ./airflow-webserver/airflow.env
+        command: scheduler
+
+    worker:
+        image: ccastleberry/airflow:${TAG}
+        build: ./airflow-webserver
+        restart: always
+        depends_on:
+            - scheduler
+        volumes:
+            - ${AIRFLOW_DAG_MOUNT}:/usr/local/airflow/dags
+            - ${GOOGLE_MOUNT}:/google_cloud
+        env_file:
+            - ./airflow-webserver/airflow.env
+        command: worker

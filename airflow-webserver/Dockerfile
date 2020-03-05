@@ -11,6 +11,7 @@ LABEL maintainer="Puckel_"
 ENV DEBIAN_FRONTEND noninteractive
 ENV TERM linux
 
+
 USER root
 # Install sql server driver
 RUN apt-get update -yqq  && \
@@ -47,11 +48,11 @@ RUN pip install -r /requirements.txt && \
 
 
 USER root
-RUN mkdir /mounted_drives
-RUN mkdir -p /data/ds_app_data
-RUN chown -R airflow /mounted_drives/
-RUN chown -R airflow /data/ds_app_data
-ENV VC_DIR=/usr/local/airflow/dags
+RUN mkdir /google_cloud
+#RUN mkdir -p /data/ds_app_data
+RUN chown -R airflow /google_cloud/
+#RUN chown -R airflow /data/ds_app_data
+#ENV VC_DIR=/usr/local/airflow/dags
 RUN usermod -a -G sudo airflow
 
 
